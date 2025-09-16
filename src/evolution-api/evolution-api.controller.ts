@@ -1,4 +1,4 @@
-import { Body, Controller, HttpException, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpException, HttpStatus, Post } from '@nestjs/common';
 import { EvolutionApiService } from './evolution-api.service';
 
 class SendMessageDto{
@@ -6,7 +6,7 @@ class SendMessageDto{
     number: string;
 }
 
-@Controller('evolution-api')
+@Controller('evo')
 export class EvolutionApiController {
 
     constructor(private readonly evolutionApiService: EvolutionApiService){}
@@ -20,11 +20,21 @@ export class EvolutionApiController {
 
         
         try{
-            const result = await this.evolutionApiService.sendTextMessage(instanceName, number, 'api test');
+            const result = await this.evolutionApiService.sendTextMessage(instanceName, number, 'wp api test');
             return { success: true, data: result };
         }catch(error){
             throw new HttpException('Erro ao enviar mensagem', HttpStatus.INTERNAL_SERVER_ERROR)
         }
+    }
+
+    @Get('teste')
+    test(){
+        return { msg: 'teste' }
+    }
+
+    @Get('status')
+    getStatus() {
+        return { status: 'ok', time: new Date().toISOString() };
     }
 
 }

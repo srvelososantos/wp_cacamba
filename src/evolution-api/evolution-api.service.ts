@@ -1,7 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { firstValueFrom } from 'rxjs';
+import { delay, firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class EvolutionApiService {
@@ -17,35 +17,32 @@ export class EvolutionApiService {
     this.apiKey = this.configService.get<string>('EVOLUTION_API_KEY');
   }
 
-  async sendTextMessage(instanceName: string, number: string, text: string) {
+  async sendTextMessage(instanceName: string, number: string, txt: string) {
     const endpoint = `${this.apiUrl}/message/sendText/${instanceName}`;
 
     const payload = {
       number: number,
-      textMessage: {
-        text: text,
-      },
+      text: txt,
     };
 
-    const headers = {
-      headers: {
-        'Content-Type': 'application/json',
-        apikey: this.apiKey,
-      },
+    const options = {
+      method: 'POST',
+      headers: {apikey: this.apiKey, 'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
     };
+
+    console.log(JSON.stringify(payload));
 
     try {
       this.logger.log(
         `Enviando mensagem para ${number} na instância ${instanceName}`,
       );
 
-      // Usamos firstValueFrom para converter o Observable do HttpService em uma Promise
-      const response = await firstValueFrom(
-        this.httpService.post(endpoint, payload, headers),
-      );
+      const response = await fetch(endpoint, options);
+      const data = await response.json();
 
-      this.logger.log('Mensagem enviada com sucesso!', response.data);
-      return response.data;
+      this.logger.log('Mensagem enviada com sucesso!', data);
+      return data;
     } catch (error) {
       this.logger.error(
         'Falha ao enviar mensagem',
