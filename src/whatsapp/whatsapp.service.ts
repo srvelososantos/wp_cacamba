@@ -7,18 +7,27 @@ export class WhatsapService {
 
     constructor(private readonly configService: ConfigService){}
 
-    private readonly instance = 'default';
+    private readonly instance = 'Leonardo';
     
 
     async handleMessages(to: string, message: string){
-        await axios.post( 
-            `${this.configService.get<string>('EVOLUTIOn_API_URL')}/message/sendText/${this.instance}`,
-            { number: to, text: message },
-            { headers: { apikey: this.configService.get<string>('EVOLUTIOn_API_KEY') } } 
-        );
+        try{
+            await axios.post( 
+                `${this.configService.get<string>('EVOLUTIOn_API_URL')}/message/sendText/${this.instance}`,
+                { number: to, text: message },
+                { headers: { apikey: this.configService.get<string>('EVOLUTIOn_API_KEY') } } 
+            );
+        }catch(HttpException){
+            console.log('erro:', HttpException)
+        }
     }
 
     async processIncomingMessage(msg: any){
+
+        if (msg.key.fromMe) {
+            return;
+        }
+
         const from = msg.key.remoteJid.replace('@s.whatsapp.net', '')
         
         // Número do contato autorizado (formato internacional, sem @s.whatsapp.net)
@@ -55,7 +64,7 @@ export class WhatsapService {
             default:
                 await this.handleMessages(from,
                 'Olá! Escolha uma opção:\n1️⃣ Ver informações\n2️⃣ Falar com atendente\n3️⃣ Encerrar');
-                break;
+            break;
         }
     }
 }

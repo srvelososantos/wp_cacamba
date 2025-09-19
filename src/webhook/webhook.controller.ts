@@ -8,8 +8,12 @@ export class WebhookController{
 
     @Post()
     async receiveMessage(@Body() body: any){
-        console.log('message:', body);
-        await this.whatsappService.processIncomingMessage(body.messages[0])
+        console.log('Webhook recebido:', JSON.stringify(body, null, 2));
+
+        const messageData = body.data
+
+        if(messageData){ await this.whatsappService.processIncomingMessage(messageData) }
+        
         return { status: 'ok' };
     }
 }
