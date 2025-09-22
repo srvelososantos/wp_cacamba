@@ -2,6 +2,7 @@
 /dist
 /node_modules
 /build
+/src/config/whatsappcacamba-1ab377983f84.json
 
 # Logs
 logs

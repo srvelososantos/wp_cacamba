@@ -1,11 +1,12 @@
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import axios from 'axios';
+import { SheetsService } from "src/sheets/sheets.service";
 
 @Injectable()
 export class WhatsapService {
 
-    constructor(private readonly configService: ConfigService){}
+    constructor(private readonly configService: ConfigService, private readonly sheetsService: SheetsService){}
 
     private readonly instance = 'Leonardo';
     private conversationState = new Map<string, { lastMessageTimestamp: number }>();
@@ -67,11 +68,22 @@ export class WhatsapService {
             return;
         }
 
+        // testan api do sheets
+        try{
+            this.sheetsService.getSheetData('CAÇ 2025 QTD!G50:G51')
+        }catch(error){
+            console.log('erro:', error);
+        }
+        
+
         if(userState){
             switch (text.trim()){
                 case '1':
                     await this.handleMessages(from, '📄 Aqui estão as informações...');
                     this.conversationState.set(from, { lastMessageTimestamp: Date.now() });
+
+
+
                     break;
                 case '2':
                     await this.handleMessages(from, '👩‍💼 Um atendente falará com você em breve.');

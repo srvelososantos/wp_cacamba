@@ -6,6 +6,7 @@ import { HttpModule } from '@nestjs/axios';
 import { EvolutionApiService } from './evolution-api/evolution-api.service';
 import { WebhookController } from './webhook/webhook.controller';
 import { WhatsapService } from './whatsapp/whatsapp.service';
+import { SheetsService } from './sheets/sheets.service';
 
 @Module({
   imports: [
@@ -14,6 +15,6 @@ import { WhatsapService } from './whatsapp/whatsapp.service';
 
   ],
   controllers: [AppController, WebhookController],
-  providers: [AppService, EvolutionApiService, WhatsapService],
+  providers: [AppService, EvolutionApiService, WhatsapService, SheetsService],
 })
 export class AppModule {}
