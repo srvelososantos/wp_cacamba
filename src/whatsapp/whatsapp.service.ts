@@ -10,6 +10,7 @@ export class WhatsapService {
 
     private readonly instance = 'Leonardo';
     private conversationState = new Map<string, { lastMessageTimestamp: number }>();
+    private requestDates = new Map<string, { amountRequests: number }>();
     
 
     async handleMessages(to: string, message: string){
@@ -31,13 +32,10 @@ export class WhatsapService {
             return;
         }
 
-        const from = msg.key.remoteJid.replace('@s.whatsapp.net', '')
+        const number = msg.key.remoteJid.replace('@s.whatsapp.net', '')
         
         // Número do contato autorizado (formato internacional, sem @s.whatsapp.net)
         const allowedNumber = '551837413311';
-
-        // Número de quem enviou a mensagem
-        const number = from.replace('@s.whatsapp.net', '');
 
         // 🔴 Ignorar todos os números que não sejam o permitido
         if (number !== allowedNumber) {
@@ -45,18 +43,18 @@ export class WhatsapService {
             return;
         }
 
-        if (from.endsWith('@g.us')) {
-            console.log('Mensagem de grupo ignorada:', from);
+        if (number.endsWith('@g.us')) {
+            console.log('Mensagem de grupo ignorada:', number);
             return;
         }
 
-        const userState = this.conversationState.get(from);
+        const userState = this.conversationState.get(number);
         const fiveMinutesInMs = 1 * 60 * 1000;
 
         // 1. Verifica se existe um estado para este usuário E se já se passaram 5 minutos
         if (userState && (Date.now() - userState.lastMessageTimestamp > fiveMinutesInMs)) {
             console.log(`Sessão expirada.`);
-            this.conversationState.delete(from); // Remove o estado antigo, resetando a conversa
+            this.conversationState.delete(number); // Remove o estado antigo, resetando a conversa
             return;
         }
 
@@ -70,7 +68,8 @@ export class WhatsapService {
 
         // testan api do sheets
         try{
-            this.sheetsService.getSheetData('CAÇ 2025 QTD!G50:G51')
+            const response = await this.sheetsService.getSheetData("'CAÇ 2025 QTD'!E46:E50;H30:H33");
+            console.log('r: ', response);
         }catch(error){
             console.log('erro:', error);
         }
@@ -79,35 +78,35 @@ export class WhatsapService {
         if(userState){
             switch (text.trim()){
                 case '1':
-                    await this.handleMessages(from, '📄 Aqui estão as informações...');
-                    this.conversationState.set(from, { lastMessageTimestamp: Date.now() });
+                    await this.handleMessages(number, '📄 Aqui estão as informações...');
+                    this.conversationState.set(number, { lastMessageTimestamp: Date.now() });
 
 
 
                     break;
                 case '2':
-                    await this.handleMessages(from, '👩‍💼 Um atendente falará com você em breve.');
-                    this.conversationState.set(from, { lastMessageTimestamp: Date.now() });
+                    await this.handleMessages(number, '👩‍💼 Um atendente falará com você em breve.');
+                    this.conversationState.set(number, { lastMessageTimestamp: Date.now() });
                     break;
                 case '3':
-                    await this.handleMessages(from, '✅ Conversa encerrada. Obrigado!');
-                    this.conversationState.delete(from);
+                    await this.handleMessages(number, '✅ Conversa encerrada. Obrigado!');
+                    this.conversationState.delete(number);
                     break;
                 default:
                     // Se a conversa está ativa mas a opção é inválida, podemos dar um feedback melhor
-                    await this.handleMessages(from, 'Opção inválida. Por favor, escolha uma das opções do menu.');
+                    await this.handleMessages(number, 'Opção inválida. Por favor, escolha uma das opções do menu.');
                     // E renovamos a sessão para dar outra chance
-                    this.conversationState.set(from, { lastMessageTimestamp: Date.now() });
+                    this.conversationState.set(number, { lastMessageTimestamp: Date.now() });
                 break;
             }
         }else{
             // --- LÓGICA PARA NOVA CONVERSA (ou expirada/encerrada) ---
-            console.log(`Iniciando nova conversa para ${from}.`);
+            console.log(`Iniciando nova conversa para ${number}.`);
 
-            await this.handleMessages(from,
+            await this.handleMessages(number,
                 'Olá! Escolha uma opção:\n1️⃣ Ver informações\n2️⃣ Falar com atendente\n3️⃣ Encerrar');
             // Inicia a sessão para o usuário, guardando o timestamp
-            this.conversationState.set(from, { lastMessageTimestamp: Date.now() });
+            this.conversationState.set(number, { lastMessageTimestamp: Date.now() });
         }
 
     }

@@ -8,7 +8,7 @@ export class WebhookController{
 
     @Post()
     async receiveMessage(@Body() body: any){
-        console.log('Webhook recebido:', JSON.stringify(body, null, 2));
+        console.log('Webhook recebido:', JSON.stringify(body.data.message, null, 2));
 
         const messageData = body.data
 
