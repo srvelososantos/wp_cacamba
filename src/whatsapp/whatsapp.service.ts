@@ -106,6 +106,27 @@ export class WhatsapService {
 
     }
 
+    getToday(){
+        let date = new Date(Date.now())
+        let dateString = date.toISOString().split('T')[0].replace(/-/g, "/")
+        return dateString;
+    }
+
+    isWeekend(day: string){
+        const [diaStr, mesStr, anoStr] = day.split('/');
+        // converte para número
+        const dia = parseInt(diaStr, 10);
+        const mes = parseInt(mesStr, 10);
+        const ano = parseInt(anoStr, 10);
+        const data = new Date(ano, mes - 1, dia);
+        const diaSemana = data.getDay();
+        if(diaSemana === 0 || diaSemana === 6){
+            //console.log(diaSemana);
+            return true;
+        }
+        return false;
+    }
+
     async getDates() {
         let v_daysrents: string[][] = [];
         try{
@@ -116,16 +137,25 @@ export class WhatsapService {
             //this.requestDates.set(res_dates[0][0], (res[0][1] as number))
             //console.log('date: ', res_dates[0][0], 'qtd: ', this.requestDates.get(res[0][0]));
             
-            console.log('matrix:',res_dates[0][0]);
+            //console.log('matriz:',res_dates[0][0]);
             const length = Math.min(res_dates.length, res_requs.length);
 
             for(let i = 0; i < length; i++){
                 v_daysrents[i] = [];
                 v_daysrents[i][0] = res_dates[i]?.[0] ?? "";
                 v_daysrents[i][1] = res_requs[i]?.[0] ?? "";
-                console.log('day:', v_daysrents[i][0],  'qtd:', v_daysrents[i][1],'\n');
+                //console.log('day:', v_daysrents[i][0],  'qtd:', v_daysrents[i][1],'\n');
+                if(v_daysrents[i][0] > this.getToday()){
+                    console.log(v_daysrents[i][0], '>', this.getToday())
+                    if(!(this.isWeekend(v_daysrents[i][0]))){
+                        console.log('2')
+                        console.log(parseInt(v_daysrents[i][1]), '<', 12)
+                        if(parseInt(v_daysrents[i][1]) < 12){
+                            console.log('3')
+                        }
+                    }
+                }
             }
-            
         }catch(error){
             console.log('erro:', error);
         }
@@ -133,6 +163,5 @@ export class WhatsapService {
 
     async cacambaOrder(number: string){
         this.getDates();
-        
     }
 }
