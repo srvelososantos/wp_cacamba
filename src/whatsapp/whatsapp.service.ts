@@ -10,7 +10,7 @@ export class WhatsapService {
 
     private readonly instance = 'Leonardo';
     private conversationState = new Map<string, { lastMessageTimestamp: number }>();
-    private requestDates = new Map<string, { amountRequests: number }>();
+    private requestDates = new Map<string, number>();
     
 
     async handleMessages(to: string, message: string){
@@ -67,21 +67,16 @@ export class WhatsapService {
         }
 
         // testan api do sheets
-        try{
-            const response = await this.sheetsService.getSheetData("'CAÇ 2025 QTD'!E46:E50;H30:H33");
-            console.log('r: ', response);
-        }catch(error){
-            console.log('erro:', error);
-        }
+        this.cacambaOrder(number);
         
 
         if(userState){
             switch (text.trim()){
                 case '1':
-                    await this.handleMessages(number, '📄 Aqui estão as informações...');
+                    await this.handleMessages(number, 'Selecione o dia que deseja solicitar a caçamba\nDias disponíveis: ')
                     this.conversationState.set(number, { lastMessageTimestamp: Date.now() });
 
-
+                    //cacambaOrder(number);
 
                     break;
                 case '2':
@@ -104,10 +99,40 @@ export class WhatsapService {
             console.log(`Iniciando nova conversa para ${number}.`);
 
             await this.handleMessages(number,
-                'Olá! Escolha uma opção:\n1️⃣ Ver informações\n2️⃣ Falar com atendente\n3️⃣ Encerrar');
+                'Olá! Escolha uma opção:\n1️⃣ Aluguél de caçamba\n2️⃣ Aluguel de máquinas\n3️⃣ Aluguel de Terra\n4️⃣ Reclamação/Denúncia\n5️⃣ Encerrar');
             // Inicia a sessão para o usuário, guardando o timestamp
             this.conversationState.set(number, { lastMessageTimestamp: Date.now() });
         }
 
+    }
+
+    async getDates() {
+        let v_daysrents: string[][] = [];
+        try{
+            
+            const res_dates = await this.sheetsService.getSheetData(`'CAÇ 2025 QTD'!A57:A175`);
+            const res_requs = await this.sheetsService.getSheetData(`'CAÇ 2025 QTD'!B57:B175`);
+    
+            //this.requestDates.set(res_dates[0][0], (res[0][1] as number))
+            //console.log('date: ', res_dates[0][0], 'qtd: ', this.requestDates.get(res[0][0]));
+            
+            console.log('matrix:',res_dates[0][0]);
+            const length = Math.min(res_dates.length, res_requs.length);
+
+            for(let i = 0; i < length; i++){
+                v_daysrents[i] = [];
+                v_daysrents[i][0] = res_dates[i]?.[0] ?? "";
+                v_daysrents[i][1] = res_requs[i]?.[0] ?? "";
+                console.log('day:', v_daysrents[i][0],  'qtd:', v_daysrents[i][1],'\n');
+            }
+            
+        }catch(error){
+            console.log('erro:', error);
+        }
+    }
+
+    async cacambaOrder(number: string){
+        this.getDates();
+        
     }
 }
