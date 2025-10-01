@@ -14,7 +14,7 @@ export class EvolutionApiService {
     private readonly configService: ConfigService,
   ) {
     this.apiUrl = "http://localhost:8080"
-    this.apiKey = "B2A58D0C6D37-4F39-AC17-72DCAB2C9DF0"
+    this.apiKey = "76F296DCAA2B-4FEF-A5BD-7F255851927D"
   }
 
   async sendTextMessage(instanceName: string, number: string, text: string) {
