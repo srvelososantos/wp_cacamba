@@ -7,20 +7,41 @@ import { SheetsService } from "src/sheets/sheets.service";
 export class WhatsapService {
 
     constructor(private readonly configService: ConfigService, private readonly sheetsService: SheetsService){}
-
     private readonly instance = 'Obras';
     private conversationState = new Map<string, { lastMessageTimestamp: number, muted: boolean }>();
     private requestDates = new Map<string, string>();
 
     isAllowed(number: string){
-        if( number === '5518981217412' || //se for mensagem desse numero, vai passar senao, nao
-            number === '5518991439028'
+        if( number === '5518981217412'  
+            //number === '5518991439028' ||   // faisca
+            //number === '5518981750330' ||   // alisson
+            //number === '5518997777743' ||   // dalvo
+            //number === '5518996965804' ||   // daniel
+            //number === '551821037005'  ||
+            //number === '551821037014'  ||
+            //number === '5517997089009' ||
+            //number === '551633039021'  ||
+            //number === '5519999696003' ||
+            //number === '551934465005'
         ){
             return true;
         }
         return false;
     }
-    
+
+    setInterval(mapManager, 400000);
+
+
+    mapManager(){
+        const fiveMinutesInMs = 5 * 60 * 1000;
+        this.conversationState.forEach((value, key) => {
+            const userState = this.conversationState.get(key);
+            if(Date.now() - userState.lastMessageTimestamp > fiveMinutesInMs){
+                console.log('limpando:', key)
+                this.conversationState.delete(key);
+            }
+        });    
+    }
 
     async handleMessages(to: string, message: string){
         try{
@@ -36,7 +57,7 @@ export class WhatsapService {
     }
 
     async processIncomingMessage(msg: any){
-
+        
         if (msg.key.fromMe) {
             return;
         }
@@ -45,7 +66,6 @@ export class WhatsapService {
 
         // 🔴 Ignorar todos os números que não sejam o permitido
         if (!this.isAllowed(number)) {
-            console.log('Mensagem ignorada de:', number);
             return;
         }
 
@@ -64,6 +84,7 @@ export class WhatsapService {
 
         if(!text) {
             console.log('!text')
+            this.conversationState.set(number, { lastMessageTimestamp: Date.now(), muted: true });
             return;
         }
 
@@ -85,25 +106,27 @@ export class WhatsapService {
                 case '1':
                     await this.handleMessages(number, 
                         'Envie o número de acordo com o dia que deseja solicitar a caçamba.')
-                    this.cacambaOrder(number);
-                    await this.handleMessages(number, 'Envie o nome completo, CPF e endereço de entrega.\nAguarde que enviaremos o boleto da caçamba em breve.')
+                    await this.handleMessages(number, 'Envie o nome completo, CPF e endereço de entrega.')
+                    await this.handleMessages(number, 'Aguarde que enviaremos o boleto em breve. A diária é R$ 11,57')
                     await this.handleMessages(number, 'Dias disponíveis:')
+                    await this.cacambaOrder(number);
                     this.conversationState.set(number, { lastMessageTimestamp: Date.now(), muted: true });
                     
                     break;
                 case '2':
                     await this.handleMessages(number, 'Infelizmente no momento não estamos fornecendo este tipo de serviço.');
-                    this.conversationState.set(number, { lastMessageTimestamp: Date.now(), muted: false });
+                    this.conversationState.set(number, { lastMessageTimestamp: Date.now(), muted: true });
                     
                     break;
                 case '3':
-                    await this.handleMessages(number, 'Infelizmente no momento não estamos fornecendo este tipo de serviço.');
-                    this.conversationState.set(number, { lastMessageTimestamp: Date.now(), muted: false });
+                    await this.handleMessages(number, 'Envie o nome completo, CPF e endereço de entrega.')
+                    await this.handleMessages(number, 'Aguarde que enviaremos o boleto em breve. Cada caminhão é R$ 57,00')
+                    this.conversationState.set(number, { lastMessageTimestamp: Date.now(), muted: true });
                     
                     break;
                 case '4':
                     await this.handleMessages(number, 'Descreva em poucas palavras sua reclamaçao/denúncia, não esqueça de mencionar o endereço da ocorrência.\nSe possível envie fotos e vídeos do ocorrido.\nUm atendente dará prosseguimento a esta reclamação/denúncia, aguarde.');
-                    this.conversationState.set(number, { lastMessageTimestamp: Date.now(), muted: false });
+                    this.conversationState.set(number, { lastMessageTimestamp: Date.now(), muted: true }); // false para continuar o atendimento automatizado
                     
                     break;
                 case '5':
@@ -122,7 +145,7 @@ export class WhatsapService {
             console.log(`Iniciando nova conversa para ${number}.`);
 
             await this.handleMessages(number,
-                'Olá, Secretaria de Obras de Castilho, em que podemos ajudar?\n\nEscolha uma opção:\n1️⃣  Aluguél de caçamba\n2️⃣  Aluguel de máquinas\n3️⃣  Aluguel de Terra\n4️⃣  Reclamação/Denúncia\n5️⃣  Encerrar');
+                'Olá, Secretaria de Obras de Castilho, em que podemos ajudar?\n\nEscolha uma opção:\n1️⃣  Aluguél de caçamba\n2️⃣  Aluguel de máquinas\n3️⃣  Caminhão de Terra\n4️⃣  Reclamação/Denúncia\n5️⃣  Encerrar');
             // Inicia a sessão para o usuário, guardando o timestamp
             this.conversationState.set(number, { lastMessageTimestamp: Date.now(), muted: false });
         }
@@ -132,7 +155,10 @@ export class WhatsapService {
     blackListDays(dateString: string){
        if(  dateString === '02/10/2025' ||
             dateString === '03/10/2025' ||
-            dateString === '27/10/2025'
+            dateString === '27/10/2025' ||
+            dateString === '09/10/2025' ||
+            dateString === '16/10/2025'
+
        ){
             return false;
        }
@@ -193,10 +219,9 @@ export class WhatsapService {
 
                 if(this.parseDateBR(v_daysrents[i][0]) > this.parseDateBR(this.tobrFormat(this.getToday()))){
                     if(!(this.isWeekend(v_daysrents[i][0]))){
-                        if(parseInt(v_daysrents[i][1]) < 12){
+                        if(parseInt(v_daysrents[i][1]) < 11){ // QTD DE CAÇAMBAS
                             if(this.blackListDays(v_daysrents[i][0])){ //        IF DE AJUSTE MANUAL DE DIAS EXEMPLO: FERIADOS
                                 if(j < 15){
-                                    //console.log('day:', v_daysrents[i][0],  'qtd:', v_daysrents[i][1],'\n');
                                     v_days[j] = v_daysrents[i][0];
                                     j++;
                                 }
