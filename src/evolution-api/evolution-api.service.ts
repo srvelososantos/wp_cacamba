@@ -13,8 +13,8 @@ export class EvolutionApiService {
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
   ) {
-    this.apiUrl = "http://localhost:8080"
-    this.apiKey = "76F296DCAA2B-4FEF-A5BD-7F255851927D"
+    this.apiUrl = this.configService.get<string>('EVOLUTIOn_API_URL')
+    this.apiKey = this.configService.get<string>('EVOLUTIOn_API_KEY')
   }
 
   async sendTextMessage(instanceName: string, number: string, text: string) {

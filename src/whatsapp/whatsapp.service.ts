@@ -10,6 +10,7 @@ export class WhatsapService {
     private readonly instance = 'Obras';
     private conversationState = new Map<string, { lastMessageTimestamp: number, muted: boolean }>();
     private requestDates = new Map<string, string>();
+    private processedMessages: Set<string> = new Set();
 
     isAllowed(number: string){
         if( number === '5518981217412'  
@@ -17,7 +18,7 @@ export class WhatsapService {
             //number === '5518981750330' ||   // alisson
             //number === '5518997777743' ||   // dalvo
             //number === '5518996965804' ||   // daniel
-            //number === '551821037005'  ||
+            //number === '551821037005'  ||   // mae do marcos
             //number === '551821037014'  ||
             //number === '5517997089009' ||
             //number === '551633039021'  ||
@@ -29,12 +30,11 @@ export class WhatsapService {
         return false;
     }
 
-    setInterval(mapManager, 400000);
-
-
     mapManager(){
-        const fiveMinutesInMs = 5 * 60 * 1000;
+        console.log('entrou')
+        const fiveMinutesInMs = 2 * 60 * 1000;
         this.conversationState.forEach((value, key) => {
+            console.log('olhando:', key)
             const userState = this.conversationState.get(key);
             if(Date.now() - userState.lastMessageTimestamp > fiveMinutesInMs){
                 console.log('limpando:', key)
@@ -45,7 +45,6 @@ export class WhatsapService {
 
     async handleMessages(to: string, message: string){
         try{
-            console.log('-----------------------------------------------')
             await axios.post( 
                 `${this.configService.get<string>('EVOLUTIOn_API_URL')}/message/sendText/${this.instance}`,
                 { number: to, text: message },
@@ -61,6 +60,24 @@ export class WhatsapService {
         if (msg.key.fromMe) {
             return;
         }
+
+        // 🚫 Evita processar a mesma mensagem mais de uma vez
+        const messageId = msg.key?.id;
+        if (!messageId) return;
+
+        if (this.processedMessages.has(messageId)) {
+            console.log(`[BOT] Ignorando mensagem duplicada: ${messageId}`);
+            return;
+        }
+
+        this.processedMessages.add(messageId);
+
+        // 🔄 Evita o Set crescer demais — limpa a cada 1000 mensagens
+        if (this.processedMessages.size > 1000) {
+            this.processedMessages.clear();
+        }
+
+        this.mapManager()
 
         const number = msg.key.remoteJid.replace('@s.whatsapp.net', '')
 
@@ -104,29 +121,30 @@ export class WhatsapService {
         if(userState){
             switch (text.trim()){
                 case '1':
+                    this.conversationState.set(number, { lastMessageTimestamp: Date.now(), muted: true });
                     await this.handleMessages(number, 
                         'Envie o número de acordo com o dia que deseja solicitar a caçamba.')
                     await this.handleMessages(number, 'Envie o nome completo, CPF e endereço de entrega.')
                     await this.handleMessages(number, 'Aguarde que enviaremos o boleto em breve. A diária é R$ 11,57')
                     await this.handleMessages(number, 'Dias disponíveis:')
                     await this.cacambaOrder(number);
-                    this.conversationState.set(number, { lastMessageTimestamp: Date.now(), muted: true });
                     
                     break;
                 case '2':
-                    await this.handleMessages(number, 'Infelizmente no momento não estamos fornecendo este tipo de serviço.');
                     this.conversationState.set(number, { lastMessageTimestamp: Date.now(), muted: true });
+                    await this.handleMessages(number, 'Infelizmente no momento não estamos fornecendo este tipo de serviço.');
                     
                     break;
                 case '3':
+                    this.conversationState.set(number, { lastMessageTimestamp: Date.now(), muted: true });
                     await this.handleMessages(number, 'Envie o nome completo, CPF e endereço de entrega.')
                     await this.handleMessages(number, 'Aguarde que enviaremos o boleto em breve. Cada caminhão é R$ 57,00')
-                    this.conversationState.set(number, { lastMessageTimestamp: Date.now(), muted: true });
                     
                     break;
                 case '4':
+                    this.conversationState.set(number, { lastMessageTimestamp: Date.now(), muted: true });
                     await this.handleMessages(number, 'Descreva em poucas palavras sua reclamaçao/denúncia, não esqueça de mencionar o endereço da ocorrência.\nSe possível envie fotos e vídeos do ocorrido.\nUm atendente dará prosseguimento a esta reclamação/denúncia, aguarde.');
-                    this.conversationState.set(number, { lastMessageTimestamp: Date.now(), muted: true }); // false para continuar o atendimento automatizado
+                    
                     
                     break;
                 case '5':
