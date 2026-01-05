@@ -13,10 +13,14 @@ export class WebhookController{
         const messageData = body.data
         // para evitar mensagens duplicadas 
 
+        
+
         if(messageData){ this.whatsappService.processIncomingMessage(messageData).catch(error => {
             // É crucial registrar quaisquer erros de processamento aqui
             console.error('Erro no processamento da mensagem em background:', error);
-        }); }
+        }); }else{
+            console.log('message data not okay')
+        }
         
         return { status: 'ok' };
     }

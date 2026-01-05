@@ -13,28 +13,27 @@ export class WhatsapService {
     private processedMessages: Set<string> = new Set();
 
     isAllowed(number: string){
-        if( number === '5518981217412'  
-            //number === '5518991439028' ||   // faisca
-            //number === '5518981750330' ||   // alisson
-            //number === '5518997777743' ||   // dalvo
-            //number === '5518996965804' ||   // daniel
-            //number === '551821037005'  ||   // mae do marcos
-            //number === '551821037014'  ||
-            //number === '5517997089009' ||
-            //number === '551633039021'  ||
-            //number === '5519999696003' ||
-            //number === '551934465005'
+        if( // number === '5518981217412' ||
+            number === '5518991439028' ||   // faisca
+            number === '5518981750330' ||   // alisson
+            number === '5518997777743' ||   // dalvo
+            number === '5518996965804' ||   // daniel
+            number === '551821037005'  ||   // mae do marcos
+            number === '551821037014'  ||
+            number === '5517997089009' ||
+            number === '551633039021'  ||
+            number === '5519999696003' ||
+            number === '551934465005'  ||
+            number === '5518997452601'
         ){
-            return true;
+            return false;
         }
-        return false;
+        return true;
     }
 
     mapManager(){
-        console.log('entrou')
-        const fiveMinutesInMs = 2 * 60 * 1000;
+        const fiveMinutesInMs = 5 * 60 * 1000;
         this.conversationState.forEach((value, key) => {
-            console.log('olhando:', key)
             const userState = this.conversationState.get(key);
             if(Date.now() - userState.lastMessageTimestamp > fiveMinutesInMs){
                 console.log('limpando:', key)
@@ -79,8 +78,11 @@ export class WhatsapService {
 
         this.mapManager()
 
-        const number = msg.key.remoteJid.replace('@s.whatsapp.net', '')
-
+        let number = msg.key.remoteJid.replace('@s.whatsapp.net', '')
+        if(msg.key.remoteJid.includes('@lid')){
+            number = msg.key.remoteJidAlt.replace('@s.whatsapp.net', '')
+        }
+        console.log('numero:',number)
         // 🔴 Ignorar todos os números que não sejam o permitido
         if (!this.isAllowed(number)) {
             return;
@@ -105,6 +107,14 @@ export class WhatsapService {
             return;
         }
 
+        //ignora mensagens antigas
+        const nowInSeconds = Math.floor(Date.now() / 1000)
+        const messageTime = msg.messageTimestamp || nowInSeconds
+        const age = nowInSeconds - messageTime
+        if(age > 60){
+            return;
+        }
+
         if (userState?.muted) {
             const elapsed = Date.now() - userState.lastMessageTimestamp;
             if (elapsed < fiveMinutesInMs) {
@@ -122,10 +132,9 @@ export class WhatsapService {
             switch (text.trim()){
                 case '1':
                     this.conversationState.set(number, { lastMessageTimestamp: Date.now(), muted: true });
-                    await this.handleMessages(number, 
-                        'Envie o número de acordo com o dia que deseja solicitar a caçamba.')
-                    await this.handleMessages(number, 'Envie o nome completo, CPF e endereço de entrega.')
-                    await this.handleMessages(number, 'Aguarde que enviaremos o boleto em breve. A diária é R$ 11,57')
+                    
+                    await this.handleMessages(number, 'Envie o CPF, nome completo, dia escolhido e endereço de entrega.')
+                    await this.handleMessages(number, 'Aguarde que enviaremos a guia de pagamento em breve. A diária é R$ 11,57')
                     await this.handleMessages(number, 'Dias disponíveis:')
                     await this.cacambaOrder(number);
                     
@@ -151,6 +160,10 @@ export class WhatsapService {
                     await this.handleMessages(number, 'Atendimento encerrado.');
                     this.conversationState.delete(number);
                     break;
+                case '6':
+                    this.conversationState.set(number, { lastMessageTimestamp: Date.now(), muted: true });
+                    await this.handleMessages(number, 'Aguarde que um atendente atenderá em breve');
+                    break;
                 default:
                     // Se a conversa está ativa mas a opção é inválida, podemos dar um feedback melhor
                     await this.handleMessages(number, 'Opção inválida. Por favor, escolha uma das opções do menu.');
@@ -163,7 +176,7 @@ export class WhatsapService {
             console.log(`Iniciando nova conversa para ${number}.`);
 
             await this.handleMessages(number,
-                'Olá, Secretaria de Obras de Castilho, em que podemos ajudar?\n\nEscolha uma opção:\n1️⃣  Aluguél de caçamba\n2️⃣  Aluguel de máquinas\n3️⃣  Caminhão de Terra\n4️⃣  Reclamação/Denúncia\n5️⃣  Encerrar');
+                'Olá, Secretaria de Obras de Castilho, em que podemos ajudar?\n\nEscolha uma opção:\n1️⃣  Aluguél de caçamba\n2️⃣  Aluguel de máquinas\n3️⃣  Caminhão de Terra\n4️⃣  Reclamação/Denúncia\n5️⃣  Encerrar\n6️⃣  Falar com um atendente');
             // Inicia a sessão para o usuário, guardando o timestamp
             this.conversationState.set(number, { lastMessageTimestamp: Date.now(), muted: false });
         }
@@ -175,7 +188,17 @@ export class WhatsapService {
             dateString === '03/10/2025' ||
             dateString === '27/10/2025' ||
             dateString === '09/10/2025' ||
-            dateString === '16/10/2025'
+            dateString === '16/10/2025' ||
+            dateString === '21/11/2025' ||
+            dateString === '20/11/2025' ||
+            dateString === '24/12/2025' ||
+            dateString === '25/12/2025' ||
+            dateString === '26/12/2025' ||
+            dateString === '31/12/2025' ||
+            dateString === '04/12/2025' ||
+            dateString === '01/01/2026' ||
+            dateString === '02/01/2026' ||
+            dateString === '18/12/2025'
 
        ){
             return false;
